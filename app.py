@@ -127,6 +127,8 @@ def load_data_and_build_index():
 
 df, inverted_index, tag_options = load_data_and_build_index()
 
+df = df.copy()
+
 # ⚡ 真實距離計算邏輯 (智慧相容欄位名稱)
 coord_col_name = None
 if '座標位置' in df.columns:
