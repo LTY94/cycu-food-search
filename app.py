@@ -45,10 +45,14 @@ LANDMARKS = {
 }
 
 def calculate_real_distance(coord1, coord2):
+    """最精準的『直線距離 (Euclidean Distance)』"""
     lat1, lng1 = coord1
     lat2, lng2 = coord2
+    
     d_lat = (lat1 - lat2) * 111000
     d_lng = (lng1 - lng2) * 101000
+    
+    # 畢氏定理算直線距離
     return int(math.sqrt(d_lat**2 + d_lng**2))
 
 # ==========================================
@@ -71,14 +75,14 @@ with st.sidebar:
     st.success(f"📍 定位基準點：{current_loc_name}")
 
 # ==========================================
-# 3. 核心大腦 (讀取 467 筆大資料庫)
+# 3. 核心大腦 (🌟完美恢復版：記憶魔法 + 影印本防護罩)
 # ==========================================
 SYNONYM_DICT = {
     "貓貓": "貓咪", "汪星人": "狗狗", "便宜": "平價", 
     "省錢": "平價", "粗飽": "吃到飽", "好喝": "飲料"
 }
 
-@st.cache_data
+@st.cache_data  # 👈 記憶魔法回來了！
 def load_data_and_build_index():
     df = pd.read_csv('中原大學美食搜尋系統(工作表1).csv', encoding='utf-8').fillna('')
     df['ID'] = pd.to_numeric(df['ID'], errors='coerce').fillna(0).astype(int)
@@ -109,9 +113,11 @@ def load_data_and_build_index():
     dropdown_options = ["(自己輸入關鍵字)"] + sorted(list(tag_set))
     return df, inverted_index, dropdown_options
 
-df, inverted_index, tag_options = load_data_and_build_index()
+# 🌟 加上防護罩：把快取的資料影印一份出來，系統就不會報錯了！
+cached_df, inverted_index, tag_options = load_data_and_build_index()
+df = cached_df.copy()
 
-# ⚡ 真實距離計算邏輯 (智慧相容欄位名稱)
+# ⚡ 真實距離計算邏輯
 coord_col_name = None
 if '座標位置' in df.columns:
     coord_col_name = '座標位置'
@@ -153,10 +159,11 @@ def render_cards(dataframe):
                 
                 st.subheader(f"✨ {row['店名']}")
                 
+                # 直線距離
                 if row['真實距離'] == 999999:
                     dist_text = "📍 距離：尚未建立座標"
                 else:
-                    dist_text = f"📍 距離：{row['真實距離']} 公尺"
+                    dist_text = f"📍 直線距離：{row['真實距離']} 公尺"
                     
                 st.markdown(f"⭐ **{row['星級評分']}** | 🏷️ {row['料理標籤']} | {dist_text}")
                 
@@ -235,20 +242,17 @@ if page == "🔍 美食搜尋":
             log_search_behavior(action_type, search_term, 0)
             
     else:
-        # 🌟 【核心修改】主動推播功能：嚴格限制 500 公尺內才顯示
         st.markdown(f"### 🎯 離「{current_loc_name}」500公尺內的鄰近美食精選推薦")
-        
-        # 篩選條件：距離必須小於等於 500 公尺
         nearby_df = df[df['真實距離'] <= 500]
         
         if len(nearby_df) > 0:
             closest_df = nearby_df.sort_values(by='真實距離', ascending=True)
             render_cards(closest_df)
         else:
-            st.info(f"💡 目前方圓 500 公尺內沒有找到符合或已建立座標的餐廳喔！變更左側「當前位置設定」可探索更多區域。")
+            st.info(f"💡 目前方圓 500 公尺內沒有找到符合或已建立座標的餐廳喔！")
 
 # ----------------------------------
-# 頁面 B：吃貨日記與推薦 (智慧分析推薦)
+# 頁面 B：吃貨日記與推薦
 # ----------------------------------
 elif page == "📅 吃貨日記與推薦":
     st.title("📅 我的吃貨日記與專屬推薦")
@@ -268,13 +272,12 @@ elif page == "📅 吃貨日記與推薦":
                     matched_ids_set.update(ids)
             rec_df = df[df['ID'].isin(list(matched_ids_set))]
             
-            # 🌟 【同步優化】智慧推薦頁面也同步限制在 500 公尺之內
             rec_df = rec_df[rec_df['真實距離'] <= 500].sort_values(by='真實距離', ascending=True)
             
             if len(rec_df) > 0:
                 render_cards(rec_df)
             else:
-                st.info(f"目前方圓 500 公尺內，暫時沒有與你的最愛「{top_keyword}」相符且已建立座標的餐廳。")
+                st.info(f"目前方圓 500 公尺內，暫時沒有與你的最愛「{top_keyword}」相符的餐廳。")
                 
             st.markdown("---")
             st.subheader("📖 近期的搜尋軌跡")
