@@ -154,9 +154,7 @@ def render_cards(dataframe):
             cols = st.columns(cards_per_row)
             
         with cols[i % cards_per_row]:
-            with st.container(border=True, height=550): 
-                img_url = row['圖片網址'] if '圖片網址' in df.columns and str(row['圖片網址']) != 'nan' and str(row['圖片網址']).strip() != '' else "https://fakeimg.pl/400x250/ff9900/ffffff?text=No+Image"
-                st.image(img_url, width="stretch")
+            with st.container(border=True, height=550):
                 
                 st.subheader(f"✨ {row['店名']}")
                 
